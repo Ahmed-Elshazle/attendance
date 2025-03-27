@@ -46,9 +46,21 @@ class StudentController extends Controller
         ]);
 
         // $schedule = AcademicSchedule::find($id);
+
+        $scheduleId = $id;
+
+        $studentId = auth()->user()->id;
         
         if (!AcademicSchedule::where('id', $id)->exists()) {
             return response()->json(['message' => 'schedule not found'], 404);
+        }
+        
+        $is_student_registered = StudentRegistration::where('student_id', $studentId)
+        ->where('academic_schedule_id', $scheduleId)
+        ->exists();
+
+        if(!$is_student_registered){
+            return response()->json(['message' => 'the student has not registered for this course'], 404);
         }
 
         $sessionType = $request->query('session_type');
@@ -58,8 +70,8 @@ class StudentController extends Controller
             ->exists();
     
         return response()->json([
-            'message' => $is_schedule_opened ? 'attendance is available now' : 'attendance is not available now'
-        ]);
+            'message' => $is_schedule_opened ? 'attendance is available for this course now' : 'attendance is not allowed for this course now'
+        ], $is_schedule_opened ? 200 : 403);
     }
     
 
@@ -70,19 +82,32 @@ class StudentController extends Controller
             'session_type' => 'required|string|in:section,lecture'
         ]);
         $scheduleId = $id;
-        $schedule = AcademicSchedule::find($scheduleId);
+        // $schedule = AcademicSchedule::find($scheduleId);
 
         $sessionType = $request->session_type;
 
         $studentId = auth()->user()->id;
 
-        if(!$schedule)return response()->json(['message' => "schedule not found"], 404);
+        // if(!$schedule)return response()->json(['message' => "schedule not found"], 404);
+
+        if (!AcademicSchedule::where('id', $id)->exists()) {
+            return response()->json(['message' => 'schedule not found'], 404);
+        }
+
+        $is_student_registered = StudentRegistration::where('student_id', $studentId)
+        ->where('academic_schedule_id', $scheduleId)
+        ->exists();
+
+        if(!$is_student_registered){
+            return response()->json(['message' => 'the student has not registered for this course'], 404);
+        }
+
 
         $is_schedule_opened = AcademicSchedule::where('id', $scheduleId)
         ->where('is_'.$sessionType.'_attendance_open', 1)
         ->first();
 
-        if(!$is_schedule_opened)return response()->json(['message' => "attendance is not allowed for the course now"], 403 );
+        if(!$is_schedule_opened)return response()->json(['message' => "attendance is not allowed for this course now"], 403 );
 
         $polygon = [
             ['lat' => 30.668684415007466, 'lng' => 30.07127425557614],

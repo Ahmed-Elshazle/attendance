@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DoctorController;
@@ -10,12 +11,24 @@ use App\Http\Controllers\StudentAffairsController;
         // Route::post('/login', [AuthController::class,'login']);
     });
 
+    Route::get('/download-video', function (Request $request) {
+        $fileName = $request->query('file', 'sample.mp4'); // اسم الملف الافتراضي
+        
+        $filePath = public_path("videos/$fileName");
+    
+        if (!file_exists($filePath)) {
+            return response()->json(['error' => 'File not found'], 404);
+        }
+    
+        return Response::download($filePath);
+    });
+
     Route::post('/login', [AuthController::class,'login']);
     Route::post('/send-otp', [AuthController::class, 'sendOtp']);
     Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
     Route::post('/verify-otp-reset-password', [AuthController::class, 'verifyOtpAndResetPassword']);
 
-    Route::get('/add-users', [AuthController::class, 'add_users']);
+    // Route::get('/add-users', [AuthController::class, 'add_users']);
 
     Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/logout', [AuthController::class,'logout']);
